@@ -36,7 +36,7 @@ def get_data_from_ip(ip):
             "country_name": data.get("country_name") or "Unknown",
             "country_flag_url": data.get("country_flag_url") or ""
         }
-    except Exception as e:
+    except Exception:
         # If the API call fails (network issue, timeout, etc.)
         return {
             "error": True,
