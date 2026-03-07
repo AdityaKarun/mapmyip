@@ -1,1 +1,91 @@
-<h1>mapmyip is running.</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <!-- viewport-fit=cover ensures content reaches the edges on notched devices (iPhone safe areas) -->
+  <title>MapMyIP</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<!-- Full-screen loader shown until IP data is fetched; hidden via JS once ready -->
+<div id="loader">
+  <div class="loader-title">Map<span>My</span>IP</div>
+  <div class="loader-sub">Locating your IP…</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+</div>
+
+<header>
+  <a href="/" class="logo">Map<span>My</span>IP</a>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><span id="themeIcon">☀️</span></button>
+</header>
+
+<!-- Desktop: sidebar + map grid. Mobile: map fills screen, sidebar becomes bottom sheet -->
+<main id="mainLayout">
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Drag handle — only visible on mobile, used to pull the bottom sheet up/down -->
+    <div class="sheet-handle" id="sheetHandle">
+      <div class="sheet-handle-pill"></div>
+      <div class="sheet-handle-label">IP Details</div>
+    </div>
+
+    <!-- IP address hero card; skeleton spans replaced by JS once data loads -->
+    <div class="ip-hero card-enter" id="ipHero">
+      <div class="section-label">Your IP Address</div>
+      <div class="ip-address" id="ipAddr"><span class="skeleton" style="width:160px">&nbsp;</span></div>
+      <div class="ip-hostname" id="ipHost"><span class="skeleton" style="width:200px">&nbsp;</span></div>
+    </div>
+
+    <!-- Location details — city, region, country (with flag), timezone -->
+    <div class="info-card card-enter" id="locCard">
+      <div class="section-label">Location</div>
+      <div class="info-row"><span class="info-key">City</span><span class="info-val" id="dCity"><span class="skeleton" style="width:80px">&nbsp;</span></span></div>
+      <div class="info-row"><span class="info-key">Region</span><span class="info-val" id="dRegion"><span class="skeleton" style="width:100px">&nbsp;</span></span></div>
+      <div class="info-row"><span class="info-key">Country</span><span class="info-val"><span class="country-val"><img class="country-flag" id="countryFlag" src="" alt="" style="display:none"/><span id="countryName"><span class="skeleton" style="width:90px">&nbsp;</span></span></span></span></div>
+      <div class="info-row"><span class="info-key">Timezone</span><span class="info-val hl" id="dTZ"><span class="skeleton" style="width:130px">&nbsp;</span></span></div>
+    </div>
+
+    <!-- Network info — ISP / ASN from the IP lookup -->
+    <div class="info-card card-enter" id="netCard">
+      <div class="section-label">Network</div>
+      <div class="info-row"><span class="info-key">Org / ASN</span><span class="info-val" id="dOrg"><span class="skeleton" style="width:150px">&nbsp;</span></span></div>
+    </div>
+
+    <!-- Coordinates displayed as a two-column grid -->
+    <div class="coords-block card-enter" id="coordsBlock">
+      <div class="coord-item"><div class="coord-label">Latitude</div><div class="coord-value" id="dLat">—</div></div>
+      <div class="coord-item"><div class="coord-label">Longitude</div><div class="coord-value" id="dLng">—</div></div>
+    </div>
+
+    <!-- Only shown if the /ip-details fetch fails -->
+    <div class="error-state" id="errorState">⚠ Failed to retrieve IP information.<br/>Please try refreshing the page.</div>
+
+    <!-- Disclaimer reminding users that IP geolocation is approximate -->
+    <div class="accuracy-note card-enter" id="accuracyNote">
+      <div class="section-label">About this data</div>
+      <div class="accuracy-note-body">
+        <div class="note-item"><div class="note-bullet"></div><div class="note-text"><strong>Location is approximate.</strong> IP geolocation resolves to a region registered with your ISP, not your physical device. Accuracy is typically city-level at best.</div></div>
+        <div class="note-item"><div class="note-bullet"></div><div class="note-text"><strong>VPN or proxy usage.</strong> If you're using a VPN or proxy, all data shown reflects the exit server's location, not yours.</div></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Collapse toggle button; floats on the sidebar edge, hidden on mobile -->
+  <button class="collapse-btn" id="collapseBtn" aria-label="Toggle sidebar">
+    <svg class="chevron-svg" viewBox="0 0 8 12"><polyline points="6,1 2,6 6,11"/></svg>
+  </button>
+
+  <!-- Leaflet map mounts into #map -->
+  <div class="map-panel"><div id="map"></div></div>
+</main>
+
+<!-- Leaflet must load before script.js since the map is initialised on DOMContentLoaded -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
