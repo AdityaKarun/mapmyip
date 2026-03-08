@@ -1,0 +1,322 @@
+/* ─────────────────────────────────────────
+   THEME TOKENS
+   Dark is the default; [data-theme="light"]
+   overrides every variable. JS toggles the
+   attribute on <html> at runtime.
+───────────────────────────────────────── */
+:root {
+  --bg: #04090e; --surface: #0b1520; --surface2: #0f1e2e; --border: #1a2d40;
+  --accent: #00d4f5; --accent2: #ff3d6b; --text: #ddeaf7; --muted: #4a6278;
+  --grid: rgba(0,212,245,0.03); --card-glow: rgba(0,212,245,0.06);
+  --sidebar-w: 340px; --header-h: 49px;
+  /* Reads the device safe-area (notch/home bar); falls back to 0 on desktop */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+[data-theme="light"] {
+  --bg: #f2f6fa; --surface: #ffffff; --surface2: #e8f0f7; --border: #c8d8e8;
+  --accent: #0077a8; --accent2: #d42050; --text: #0f1e2d; --muted: #6a8499;
+  --grid: rgba(0,119,168,0.04); --card-glow: rgba(0,119,168,0.05);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  height: 100dvh;
+  overflow: hidden; /* prevents scroll bleed — the map and sheet handle their own scrolling */
+  transition: background 0.35s, color 0.35s;
+}
+/* Subtle dot-grid background drawn as a pseudo-element so it never interferes with clicks */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* ── Loader ── */
+#loader {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 2000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1.2rem;
+  transition: opacity 0.6s, visibility 0.6s;
+}
+/* visibility keeps the element out of the tab order once hidden, opacity handles the fade */
+#loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-title {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 700; font-size: 2rem;
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(0,212,245,0.5);
+  letter-spacing: -0.03em;
+}
+.loader-title span { color: var(--accent2); }
+.loader-sub { font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+.loader-bar-wrap { width: 180px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.loader-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  animation: load 1.8s ease forwards;
+}
+/* Stalls at 75% to give the impression of waiting, then completes on hide */
+@keyframes load { 0%{width:0%} 65%{width:75%} 100%{width:100%} }
+
+
+/* ── Header ── */
+header {
+  position: relative; z-index: 100;
+  padding: 0 1.25rem; height: var(--header-h);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface);
+  transition: background 0.35s, border-color 0.35s;
+  flex-shrink: 0;
+}
+.logo {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 700; font-size: 1.1rem;
+  color: var(--accent); letter-spacing: -0.02em; text-decoration: none;
+}
+.logo span { color: var(--accent2); }
+.theme-toggle {
+  width: 30px; height: 30px;
+  border-radius: 7px; border: 1px solid var(--border);
+  background: var(--surface2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  transition: border-color 0.2s, background 0.35s;
+}
+.theme-toggle:hover { border-color: var(--accent); }
+
+
+/* ── Desktop layout ── */
+main {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: var(--sidebar-w) 1fr;
+  height: calc(100dvh - var(--header-h));
+  transition: grid-template-columns 0.38s cubic-bezier(0.4,0,0.2,1);
+}
+/* Collapsing to 0px lets the sidebar animate out without removing it from the DOM */
+main.sidebar-collapsed { grid-template-columns: 0px 1fr; }
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 0.8rem 0.6rem 0.8rem 0.9rem;
+  /* scrollbar-gutter: stable prevents layout shift when the scrollbar appears/disappears */
+  scrollbar-gutter: stable;
+  display: flex; flex-direction: column; gap: 0.6rem;
+  overflow-y: auto; overflow-x: hidden;
+  background: var(--surface);
+  transition: background 0.35s, border-color 0.35s, opacity 0.28s, padding 0.38s cubic-bezier(0.4,0,0.2,1);
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+main.sidebar-collapsed .sidebar { opacity: 0; padding: 0; pointer-events: none; border-right-color: transparent; }
+
+/* Thin tab that sits flush against the sidebar edge, allowing collapse/expand on desktop */
+.collapse-btn {
+  position: fixed;
+  top: calc(var(--header-h) + (100dvh - var(--header-h))/2);
+  transform: translateY(-50%);
+  left: calc(var(--sidebar-w) - 1px);
+  z-index: 1000;
+  width: 18px; height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--border); border-left: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: left 0.38s cubic-bezier(0.4,0,0.2,1), background 0.2s, border-color 0.35s;
+}
+.collapse-btn:hover { background: var(--surface2); border-color: var(--accent); }
+.chevron-svg {
+  width: 8px; height: 8px;
+  stroke: var(--muted); fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+  flex-shrink: 0;
+}
+/* Rotates the chevron to point right when the sidebar is collapsed */
+main.sidebar-collapsed .chevron-svg { transform: rotate(180deg); }
+
+
+/* ── Cards ── */
+.section-label { font-size: 0.52rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+
+/* Cards start invisible and slightly offset; JS adds .visible to trigger the entrance */
+.card-enter { opacity: 0; transform: translateY(8px); transition: opacity 0.5s, transform 0.5s; }
+.card-enter.visible { opacity: 1; transform: translateY(0); }
+
+.ip-hero {
+  background: linear-gradient(135deg, var(--card-glow), transparent);
+  border: 1px solid rgba(0,212,245,0.2);
+  border-radius: 10px; padding: 0.85rem 0.95rem;
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+[data-theme="light"] .ip-hero { border-color: rgba(0,119,168,0.25); }
+/* Decorative radial glow in the top-right corner of the hero card */
+.ip-hero::after {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(0,212,245,0.1), transparent 70%);
+  border-radius: 50%; pointer-events: none;
+}
+/* word-break: break-all handles rare cases where an IPv6 address overflows */
+.ip-address { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.45rem; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; word-break: break-all; }
+.ip-hostname { font-size: 0.6rem; color: var(--muted); margin-top: 0.2rem; }
+
+.info-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 0.9rem; flex-shrink: 0; }
+.info-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.35rem 0; border-bottom: 1px solid var(--border); gap: 0.8rem; }
+.info-row:last-child { border-bottom: none; padding-bottom: 0; }
+.info-row:first-child { padding-top: 0; }
+.info-key { font-size: 0.56rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0; }
+.info-val { font-size: 0.69rem; color: var(--text); text-align: right; word-break: break-word; }
+.info-val.hl { color: var(--accent); } /* highlight variant used for timezone */
+.country-val { display: flex; align-items: center; gap: 0.35rem; justify-content: flex-end; }
+.country-flag { height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+.coords-block { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; flex-shrink: 0; }
+.coord-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem; text-align: center; }
+.coord-label { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
+.coord-value { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--accent); margin-top: 0.15rem; }
+
+/* Skeleton shimmer shown while data is loading; replaced by real content via JS */
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--surface2) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 3px; height: 1em; display: inline-block;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* Hidden by default; shown via JS if the /ip-details request fails */
+.error-state {
+  background: rgba(255,61,107,0.08); border: 1px solid rgba(255,61,107,0.3);
+  border-radius: 10px; padding: 0.9rem; text-align: center;
+  color: var(--accent2); font-size: 0.7rem; line-height: 1.65;
+  display: none; flex-shrink: 0;
+}
+
+.accuracy-note { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 0.9rem; flex-shrink: 0; }
+.accuracy-note-body { display: flex; flex-direction: column; gap: 0.5rem; }
+.note-item { display: flex; gap: 0.55rem; align-items: flex-start; }
+.note-bullet { width: 4px; height: 4px; border: 1px solid var(--muted); transform: rotate(45deg); flex-shrink: 0; margin-top: 0.42rem; opacity: 0.5; }
+.note-text { font-size: 0.6rem; color: var(--muted); line-height: 1.7; }
+.note-text strong { font-size: 0.56rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; color: var(--text); }
+
+
+/* ── Map ── */
+.map-panel { position: relative; overflow: hidden; }
+/* Map starts transparent and fades in after flyTo completes */
+#map { width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s; }
+#map.visible { opacity: 1; }
+/* Faint scanline overlay adds depth without affecting map interaction (pointer-events: none) */
+.map-panel::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 400;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.012) 3px, rgba(0,0,0,0.012) 4px);
+}
+/* Custom Leaflet marker rendered as a div so it inherits --accent and can be animated */
+.custom-marker {
+  width: 14px; height: 14px;
+  background: var(--accent); border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 4px rgba(0,212,245,0.28), 0 0 18px rgba(0,212,245,0.6);
+  animation: pulse-marker 2s infinite;
+}
+@keyframes pulse-marker {
+  0%,100% { box-shadow: 0 0 0 4px rgba(0,212,245,0.28), 0 0 18px rgba(0,212,245,0.4); }
+  50%      { box-shadow: 0 0 0 10px rgba(0,212,245,0.06), 0 0 28px rgba(0,212,245,0.7); }
+}
+/* Override Leaflet's default popup styles to match the app theme */
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important; color: var(--text) !important;
+  border: 1px solid var(--border) !important; border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+  font-family: 'IBM Plex Mono', monospace !important; font-size: 0.7rem !important;
+}
+.leaflet-popup-tip { background: var(--surface) !important; }
+.leaflet-popup-close-button { color: var(--muted) !important; }
+
+
+/* ── Sheet handle — hidden on desktop, shown on mobile ── */
+.sheet-handle { display: none; }
+
+
+/* ── Tablet (640–1023px) ── */
+@media (min-width: 640px) and (max-width: 1023px) {
+  :root { --sidebar-w: 280px; }
+  .ip-address { font-size: 1.2rem; }
+  .collapse-btn { width: 16px; height: 38px; }
+}
+
+
+/* ── Mobile (<640px) — sidebar becomes a draggable bottom sheet ── */
+@media (max-width: 639px) {
+  /* Map fills the full viewport behind the sheet */
+  main { display: block; height: calc(100dvh - var(--header-h)); position: relative; }
+  .map-panel { position: absolute; inset: 0; z-index: 1; }
+  #map { height: 100%; }
+  .collapse-btn { display: none !important; }
+
+  /* Sheet is fixed to the bottom; translateY is controlled entirely by JS touch logic */
+  .sidebar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: auto; max-height: 85dvh;
+    z-index: 600;
+    border-right: none; border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 0 1rem;
+    /* Accounts for iPhone home bar so content isn't clipped */
+    padding-bottom: calc(1rem + var(--safe-bottom));
+    gap: 0.55rem;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    background: var(--surface);
+    box-shadow: 0 -6px 30px rgba(0,0,0,0.45);
+    /* Hint the browser to composite this layer independently for smooth transforms */
+    will-change: transform;
+  }
+  [data-theme="light"] .sidebar { box-shadow: 0 -6px 30px rgba(0,0,0,0.12); }
+
+  /* Sticky handle stays visible at the top of the sheet while the user scrolls content */
+  .sheet-handle {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 1rem 10px;
+    flex-shrink: 0;
+    position: sticky; top: 0;
+    background: var(--surface); z-index: 1;
+    margin: 0 -1rem;
+    border-radius: 16px 16px 0 0;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.35s;
+  }
+  .sheet-handle-pill {
+    width: 36px; height: 4px;
+    background: var(--muted); opacity: 0.4;
+    border-radius: 99px; margin-bottom: 8px;
+  }
+  .sheet-handle-label {
+    font-size: 0.68rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  .info-row { padding: 0.5rem 0; }
+  .ip-address { font-size: 1.3rem; }
+}
+
+
+/* ── Wide screens (1600px+) ── */
+@media (min-width: 1600px) {
+  :root { --sidebar-w: 380px; }
+  .ip-address { font-size: 1.6rem; }
+}
