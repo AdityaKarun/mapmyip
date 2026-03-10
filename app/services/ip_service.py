@@ -10,7 +10,7 @@ ACCESS_TOKEN = os.getenv("IPINFO_TOKEN")
 if not ACCESS_TOKEN:
     raise ValueError("IPINFO_TOKEN not set in environment variables")
 
-# Initialize handler once (not per request)
+# Initialised handler once at module load so the same HTTP session is reused across requests
 handler = ipinfo.getHandler(ACCESS_TOKEN)
 
 def get_data_from_ip(ip):
@@ -18,7 +18,6 @@ def get_data_from_ip(ip):
     Fetch geolocation, network and timezone details
     from IPInfo and return a normalized dictionary.
     """
-
     try:
         details = handler.getDetails(ip)
         data = details.all
@@ -37,7 +36,7 @@ def get_data_from_ip(ip):
             "country_flag_url": data.get("country_flag_url") or ""
         }
     except Exception:
-        # If the API call fails (network issue, timeout, etc.)
+        # Catches network errors, timeouts, invalid IP responses, etc
         return {
             "error": True,
             "message": "Failed to fetch IP information"
