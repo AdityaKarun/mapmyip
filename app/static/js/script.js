@@ -261,6 +261,7 @@ async function loadIPData() {
       }, 700);
     }
     reveal('accuracyNote', 480);
+    reveal('builtBy', 600); // staggered after accuracyNote
 
   } catch(err) {
     console.error(err);
@@ -268,6 +269,7 @@ async function loadIPData() {
     $('errorState').style.display = 'block';
     reveal('ipHero', 0);
     reveal('accuracyNote', 200);
+    reveal('builtBy', 320);
   }
 }
 

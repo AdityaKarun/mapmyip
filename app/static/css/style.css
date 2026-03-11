@@ -213,6 +213,16 @@ main.sidebar-collapsed .chevron-svg { transform: rotate(180deg); }
 .note-text { font-size: 0.6rem; color: var(--muted); line-height: 1.7; }
 .note-text strong { font-size: 0.56rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; color: var(--text); }
 
+/* Credit line — sits just below the accuracy note */
+.built-by {
+  font-size: 0.52rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); text-align: center;
+  padding: 0.1rem 0 0.25rem;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+.built-by span { color: var(--accent); }
+
 
 /* ── Map ── */
 .map-panel { position: relative; overflow: hidden; }
