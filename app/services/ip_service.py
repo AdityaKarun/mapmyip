@@ -13,7 +13,7 @@ if not ACCESS_TOKEN:
 # Initialised handler once at module load so the same HTTP session is reused across requests
 handler = ipinfo.getHandler(ACCESS_TOKEN)
 
-def get_data_from_ip(ip):
+def get_data_from_ip(ip=None):
     """
     Fetch geolocation, network and timezone details
     from IPInfo and return a normalized dictionary.
@@ -23,8 +23,8 @@ def get_data_from_ip(ip):
         data = details.all
 
         return {
-            "ip": data.get("ip") or ip,
-            "hostname": data.get("hostname") or "N/A",
+            "ip": data.get("ip") or "Unknown",
+            "hostname": data.get("hostname") or "Unknown",
             "latitude": data.get("latitude"),
             "longitude": data.get("longitude"),
             "city": data.get("city") or "Unknown",
