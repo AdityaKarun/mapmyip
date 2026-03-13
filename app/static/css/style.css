@@ -222,6 +222,10 @@ main.sidebar-collapsed .chevron-svg { transform: rotate(180deg); }
   margin-top: 0.2rem;
 }
 .built-by span { color: var(--accent); }
+.built-by a {
+  text-decoration: none;
+  color: inherit;
+}
 
 
 /* ── Map ── */
