@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 import ipaddress
 
-from .services.ip_service import get_data_from_ip
+from .services.ip_service import get_ip_data
 
 main = Blueprint("main", __name__)
 
@@ -35,8 +35,11 @@ def get_ip_details():
         is_loopback = False
 
     if is_loopback:
-        data = get_data_from_ip()
+        data = get_ip_data()
     else:
-        data = get_data_from_ip(ip)
+        data = get_ip_data(ip)
 
-    return jsonify(data)
+    if data.get("error"):
+        return jsonify(data), 500
+
+    return jsonify(data), 200
