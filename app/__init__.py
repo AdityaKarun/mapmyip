@@ -1,12 +1,10 @@
 import os
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 
 from .routes import main
-
-db = SQLAlchemy()
+from .extensions import db
 
 def create_app():
     """
@@ -23,11 +21,18 @@ def create_app():
 
     app = Flask(__name__)
 
+    # Configure database connection from environment
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # Bind SQLAlchemy instance to this app
     db.init_app(app)
 
+    # Register routes/blueprints
     app.register_blueprint(main)
+
+    # Ensure tables are created (if they don't exist already) before handling any requests
+    with app.app_context():
+        db.create_all()
 
     return app
