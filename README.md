@@ -2,6 +2,14 @@
 
 MapMyIP is a modern, full-stack web application that detects your public IP address and visualizes your approximate geographic location on an interactive map. Built with Flask and Leaflet.js, it combines a powerful backend with a beautifully designed responsive frontend that works seamlessly on desktop and mobile devices.
 
+## Screenshots
+
+### Loading Page
+![Loading Screen Preview](assets/preview_01.png)
+
+### Home Page
+![Home Page Preview](assets/preview_02.png)
+
 ## 📖 Table of Contents
 
 - [Features](#features)
@@ -22,7 +30,7 @@ MapMyIP is a modern, full-stack web application that detects your public IP addr
 - **Detailed Information**: City, region, country, timezone, ISP/ASN, and coordinates
 - **Responsive Design**: Desktop sidebar layout and mobile bottom sheet interface
 - **Dark/Light Theme**: Automatic OS detection with manual toggle support
-- **Performance**: Skeleton loading states, optimized API session reuse, smooth animations
+- **Performance**: Skeleton loading states, optimized API session reuse, smooth animations, and database caching to reduce external API calls
 - **Transparency**: Includes disclaimers about IP geolocation accuracy and VPN/proxy usage
 
 ---
@@ -30,38 +38,61 @@ MapMyIP is a modern, full-stack web application that detects your public IP addr
 ## 🏗️ Architecture Overview
 
 ```
-┌─────────────────────────────────────────────┐
-│         User's Browser (Client)             │
-│  ┌───────────────────────────────────────┐  │
-│  │ index.html + style.css + script.js    │  │
-│  └──────────────┬────────────────────────┘  │
-└─────────────────┼───────────────────────────┘
-                  │ fetch('/ip-details')
-                  ▼
-┌─────────────────────────────────────────────┐
-│       Flask Application (Backend)           │
-│  ┌───────────────────────────────────────┐  │
-│  │ routes.py - GET /ip-details           │  │
-│  │  • Detects client IP                  │  │
-│  │  • Calls ip_service.get_data_from_ip()│  │
-│  │  • Returns JSON response              │  │
-│  └──────────────┬────────────────────────┘  │
-│  ┌──────────────┴────────────────────────┐  │
-│  │ services/ip_service.py                │  │
-│  │  • IPInfo API integration             │  │
-│  │  • Data normalization                 │  │
-│  │  • Error handling                     │  │
-│  └───────────────────────────────────────┘  │
-└─────────────────┬───────────────────────────┘
-                  │ IPInfo API response
-                  ▼
-┌─────────────────────────────────────────────┐
-│         IPInfo API (External Service)       │
-|  ┌───────────────────────────────────────┐  |
-│  │  • IP geolocation database lookups    │  │
-│  │  • Returns IP, location, ISP, timezone│  │
-|  └───────────────────────────────────────┘  |
-└─────────────────────────────────────────────┘
+                                ┌─────────────────────────────────────────────┐
+                                │         Client (Browser)                    │
+                                │  ┌───────────────────────────────────────┐  │
+                                │  │ HTML / CSS / JS (UI Layer)            │  │
+                                │  │ • Triggers API call                   │  │
+                                │  │   fetch('/ip-details')                │  │
+                                │  └──────────────┬────────────────────────┘  │
+                                └─────────────────┼───────────────────────────┘
+                                                  │ HTTP Request
+                                                  ▼
+                                ┌─────────────────────────────────────────────┐
+                                │        Flask Application (API Layer)        │
+                                │  ┌───────────────────────────────────────┐  │
+                                │  │ routes.py (Controller Layer)          │  │
+                                │  │ • Parses request                      │  │
+                                │  │ • Extracts client IP                  │  │
+                                │  │ • Calls service layer                 │  │
+                                │  │ • Returns JSON response               │  │
+                                │  └──────────────┬────────────────────────┘  │
+                                │                 │                           │
+                                │  ┌──────────────▼────────────────────────┐  │
+                                │  │ services/ip_service.py                │  │
+                                │  │ (Business Logic Layer)                │  │
+                                │  │ • Cache-first strategy                │  │
+                                │  │   1. Check DB (cache hit?)            │  │
+                                │  │   2. If miss → call external API      │  │
+                                │  │   3. Persist result in DB             │  │
+                                │  │ • Data normalization                  │  │
+                                │  │ • Error handling & fallback           │  │
+                                │  └──────────────┬────────────────────────┘  │
+                                │                 │                           │
+                                │  ┌──────────────▼────────────────────────┐  │
+                                │  │ queries/ip_queries.py                 │  │
+                                │  │ (Data Access Layer)                   │  │
+                                │  │ • Abstract DB operations              │  │
+                                │  │ • Insert / Fetch IP records           │  │
+                                │  └──────────────┬────────────────────────┘  │
+                                │                 │                           │
+                                │  ┌──────────────▼────────────────────────┐  │
+                                │  │ models.py (ORM Layer)                 │  │
+                                │  │ • IPDetails schema (SQLAlchemy)       │  │
+                                │  └──────────────┬────────────────────────┘  │
+                                │                 │                           │
+                                │  ┌──────────────▼────────────────────────┐  │
+                                │  │ extensions.py                         │  │
+                                │  │ • Initializes DB (SQLAlchemy)         │  │
+                                │  └──────────────┬────────────────────────┘  │
+                                └──────────┬──────────────────────┬───────────┘
+                                           │                      │
+                                           ▼                      ▼
+            ┌────────────────────────────────────────┐   ┌──────────────────────────────────────┐
+            │     PostgreSQL (Persistence Layer)     │   │     External Service (IPInfo API)    │
+            │  • Stores cached IP data               │   │  • Provides IP geolocation data      │
+            │  • Reduces redundant API calls         │   │  • Network-bound dependency          │
+            └────────────────────────────────────────┘   └──────────────────────────────────────┘
 ```
 
 ---
@@ -72,6 +103,7 @@ MapMyIP is a modern, full-stack web application that detects your public IP addr
 |-------|-----------|
 | **Frontend** | HTML5, CSS3, JavaScript |
 | **Backend** | Python 3, Flask |
+| **Database** | PostgreSQL |
 | **API** | IPInfo |
 
 ---
@@ -121,6 +153,18 @@ python run.py
 IPINFO_TOKEN=your_token_here
 ```
 
+### Setting up PostgreSQL Database
+
+1. Install PostgreSQL on your system or use a cloud service (e.g., Heroku Postgres, AWS RDS)
+2. Create a database for the application
+3. Add the database connection URL to your `.env` file:
+
+```bash
+DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:<DB_PORT>/<DB_NAME>
+```
+
+For production deployments, use environment variables provided by your hosting platform.
+
 ---
 
 ## 📂 Project Structure
@@ -129,12 +173,15 @@ IPINFO_TOKEN=your_token_here
 mapmyip/
 │
 ├── app/
-│   ├── __init__.py              # App factory
+│   ├── __init__.py              # App factory & database setup
+│   ├── extensions.py            # Flask extensions (SQLAlchemy)
+│   ├── models.py                # Database models (IPDetails)
 │   ├── routes.py                # API endpoints
+│   ├── queries/
+│   │   └── ip_queries.py        # Database query functions
 │   ├── services/
-│   │   └── ip_service.py        # IPInfo integration
+│   │   └── ip_service.py        # IPInfo integration & caching logic
 │   ├── static/
-|   |   |── favicon.svg          # Favicon image
 │   │   ├── css/
 │   │   │   └── style.css        # Responsive styles & themes
 │   │   └── js/
