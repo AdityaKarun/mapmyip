@@ -189,19 +189,27 @@ function getGMTOffset(tz) {
   } catch(e) { return ''; }
 }
 
+// Normalises lng to the shortest path from the map's current centre so flyTo
+// always travels the short way around instead of crossing ±180°.
+function normalizeLng(lng) {
+  const center = map.getCenter();
+  const diff = ((lng - center.lng) % 360 + 540) % 360 - 180;
+  return center.lng + diff;
+}
+
 
 /* ── Map ─────────────────────────────────────────────────────────────────── */
 function initMap() {
   map = L.map('map', {
-    zoomControl: false,       // repositioned via L.control.zoom below
-    attributionControl: false, // repositioned via L.control.attribution below
-    maxBounds: [[-90,-180],[90,180]], maxBoundsViscosity: 1, // prevent panning beyond world edges
-    worldCopyJump: false, minZoom: 2
+    zoomControl: false,
+    attributionControl: false,
+    worldCopyJump: true,   // lets Leaflet pick the shorter animation path at edges
+    minZoom: 3
   }).setView([20, 0], 2);
 
   // Two tile layers pre-loaded; only one is active at a time, swapped by applyTheme()
-  darkLayer  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  {maxZoom:20, subdomains:'abcd', attribution:'&copy; OpenStreetMap &copy; CARTO'});
-  lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:20, subdomains:'abcd', attribution:'&copy; OpenStreetMap &copy; CARTO'});
+  darkLayer  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  {maxZoom:20, subdomains:'abcd', keepBuffer:6, updateWhenIdle:false, updateWhenZooming:false, attribution:'&copy; OpenStreetMap &copy; CARTO'});
+  lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:20, subdomains:'abcd', keepBuffer:6, updateWhenIdle:false, updateWhenZooming:false, attribution:'&copy; OpenStreetMap &copy; CARTO'});
   (currentTheme === 'dark' ? darkLayer : lightLayer).addTo(map);
 
   L.control.zoom({position:'topright'}).addTo(map);
@@ -251,9 +259,10 @@ async function loadIPData() {
       reveal('coordsBlock', 360);
       // 700ms delay lets the loader fade out before the map animation starts
       setTimeout(() => {
+        const normalizedLng = normalizeLng(lng);
         const markerIcon = L.divIcon({className:'', html:'<div class="custom-marker"></div>', iconSize:[14,14], iconAnchor:[7,7]});
-        map.flyTo([lat, lng], isMobile() ? 9 : 11, {animate:true, duration:3.5, easeLinearity:0.15});
-        L.marker([lat, lng], {icon: markerIcon})
+        map.flyTo([lat, normalizedLng], isMobile() ? 9 : 11, {animate:true, duration:3.5, easeLinearity:0.15});
+        L.marker([lat, normalizedLng], {icon: markerIcon})
           .addTo(map)
           .bindPopup('<b style="color:var(--accent)">' + d.ip + '</b><br>' + [d.city, d.country].filter(Boolean).join(', '))
           .openPopup();
