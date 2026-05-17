@@ -10,6 +10,17 @@ def home():
     """Render the main single-page interface."""
     return render_template("index.html")
 
+@main.route("/health")
+def check_health():
+    """
+    Simple health-check endpoint for uptime monitoring services.
+
+    Used to verify the backend is running and responsive.
+    """
+    data = {"status": "ok"}
+
+    return jsonify(data), 200
+
 @main.route("/ip-details")
 def get_ip_details():
     """
