@@ -15,8 +15,8 @@ MapMyIP is a modern, full-stack web application that detects your public IP addr
 - [Features](#features)
 - [Architecture Overview](#architecture-overview)
 - [Tech Stack](#tech-stack)
-- [Quick Start](#quick-start)
 - [Configuration](#configuration)
+- [Quick Start](#quick-start)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -104,7 +104,47 @@ MapMyIP is a modern, full-stack web application that detects your public IP addr
 | **Frontend** | HTML5, CSS3, JavaScript |
 | **Backend** | Python 3, Flask |
 | **Database** | PostgreSQL |
-| **API** | IPInfo |
+| **API** | IPInfo, CARTO Basemaps |
+
+---
+
+## ⚙️ Configuration
+
+### Getting an IPInfo API Token
+
+1. Visit [ipinfo.io](https://ipinfo.io)
+2. Sign up for a free account (10,000 API calls/month)
+3. Copy your API token from the dashboard
+4. Add it to your `.env` file:
+
+```bash
+IPINFO_TOKEN=your_token_here
+```
+
+### Getting a CARTO Basemap API Key
+
+CARTO's map tiles now require an API key (free tier: up to 5 million tile requests/month).
+
+1. Visit [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey)
+2. Fill the form to request for an API key — it is free, and there is no approval queue
+3. Copy your API key
+4. Add it to your `.env` file:
+
+```bash
+CARTO_API_KEY=your_key_here
+```
+
+### Setting up PostgreSQL Database
+
+1. Install PostgreSQL on your system, or use a cloud service such as Neon, Heroku Postgres, or AWS RDS
+2. Create a database for the application
+3. Add the database connection URL to your `.env` file:
+
+```bash
+DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:<DB_PORT>/<DB_NAME>
+```
+
+For production deployments, use environment variables provided by your hosting platform.
 
 ---
 
@@ -113,6 +153,7 @@ MapMyIP is a modern, full-stack web application that detects your public IP addr
 ### Prerequisites
 - Python 3.8 or higher
 - IPInfo API token (free tier: [ipinfo.io](https://ipinfo.io))
+- CARTO API key (free tier: [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey))
 
 ### Setup
 
@@ -130,40 +171,13 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env and add your IPInfo token
+# Edit .env and add your IPInfo token and CARTO API key
 
 # Run the application
 python run.py
 
 # Open http://localhost:5000 in your browser
 ```
-
----
-
-## ⚙️ Configuration
-
-### Getting an IPInfo API Token
-
-1. Visit [ipinfo.io](https://ipinfo.io)
-2. Sign up for a free account (10,000 API calls/month)
-3. Copy your API token from the dashboard
-4. Add it to your `.env` file:
-
-```bash
-IPINFO_TOKEN=your_token_here
-```
-
-### Setting up PostgreSQL Database
-
-1. Install PostgreSQL on your system or use a cloud service (e.g., Heroku Postgres, AWS RDS)
-2. Create a database for the application
-3. Add the database connection URL to your `.env` file:
-
-```bash
-DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:<DB_PORT>/<DB_NAME>
-```
-
-For production deployments, use environment variables provided by your hosting platform.
 
 ---
 

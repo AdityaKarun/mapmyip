@@ -207,9 +207,11 @@ function initMap() {
     minZoom: 3
   }).setView([20, 0], 2);
 
-  // Two tile layers pre-loaded; only one is active at a time, swapped by applyTheme()
-  darkLayer  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  {maxZoom:20, subdomains:'abcd', keepBuffer:6, updateWhenIdle:false, updateWhenZooming:false, attribution:'&copy; OpenStreetMap &copy; CARTO'});
-  lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:20, subdomains:'abcd', keepBuffer:6, updateWhenIdle:false, updateWhenZooming:false, attribution:'&copy; OpenStreetMap &copy; CARTO'});
+// CARTO requires an API key on tile requests
+const cartoKey = window.CARTO_API_KEY ? `?key=${window.CARTO_API_KEY}` : '';
+
+darkLayer  = L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${cartoKey}`,  {maxZoom:20, subdomains:'abcd', keepBuffer:6, updateWhenIdle:false, updateWhenZooming:false, attribution:'&copy; OpenStreetMap &copy; CARTO'});
+lightLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png${cartoKey}`, {maxZoom:20, subdomains:'abcd', keepBuffer:6, updateWhenIdle:false, updateWhenZooming:false, attribution:'&copy; OpenStreetMap &copy; CARTO'});
   (currentTheme === 'dark' ? darkLayer : lightLayer).addTo(map);
 
   L.control.zoom({position:'topright'}).addTo(map);

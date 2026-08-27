@@ -1,14 +1,22 @@
-from flask import Blueprint, render_template, request, jsonify
+import os
+
 import ipaddress
+from flask import Blueprint, render_template, request, jsonify
+from dotenv import load_dotenv
 
 from .services.ip_service import get_ip_data
+
+# Load environment variables
+load_dotenv()
+
+CARTO_API_KEY = os.getenv("CARTO_API_KEY", "")
 
 main = Blueprint("main", __name__)
 
 @main.route("/")
 def home():
     """Render the main single-page interface."""
-    return render_template("index.html")
+    return render_template("index.html", carto_api_key=CARTO_API_KEY)
 
 @main.route("/health")
 def check_health():

@@ -96,6 +96,11 @@
 
 <!-- Leaflet must load before script.js since the map is initialised on DOMContentLoaded -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Inject the CARTO API key from the server into the browser as a JS global -->
+<script>
+  window.CARTO_API_KEY = "{{ carto_api_key }}";
+</script>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
